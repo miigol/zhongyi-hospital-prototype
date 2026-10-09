@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中医院获客合作 — 后台管理系统原型</title>
+<style>
+:root{--bg:#f0f2f5;--sidebar-bg:#1e293b;--sidebar-active:#2563eb;--card-bg:#fff;--text:#1e293b;--text-2:#64748b;--text-3:#94a3b8;--border:#e2e8f0;--primary:#2563eb;--primary-light:#dbeafe;--success:#059669;--success-light:#d1fae5;--warning:#d97706;--warning-light:#fef3c7;--danger:#dc2626;--danger-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--teal:#0d9488;--teal-light:#ccfbf1;--shadow:0 1px 3px rgba(0,0,0,.06);--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--sidebar-bg);color:#cbd5e1;flex-shrink:0;position:fixed;height:100vh;overflow-y:auto;z-index:50}
+.sidebar-header{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-header h2{font-size:16px;color:#fff;font-weight:600}
+.sidebar-header p{font-size:11px;color:#64748b;margin-top:4px}
+.sidebar-nav{padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:13px;color:#94a3b8;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#e2e8f0}
+.nav-item.active{background:rgba(37,99,235,.15);color:#fff;border-left-color:var(--sidebar-active)}
+.nav-item .nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-section-title{font-size:11px;color:#475569;text-transform:uppercase;padding:16px 20px 6px;letter-spacing:1px}
+.main{flex:1;margin-left:220px}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:40}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-left h1{font-size:16px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-right select{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
+.topbar-right .user-info{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.content{padding:24px}
+.page{display:none}
+.page.active{display:block}
+.card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:15px;font-weight:600}
+.card-body{padding:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);position:relative;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.kpi-card .label{font-size:12px;color:var(--text-3);margin-bottom:8px}
+.kpi-card .value{font-size:28px;font-weight:700;line-height:1.2}
+.kpi-card .unit{font-size:14px;font-weight:400;color:var(--text-2)}
+.kpi-card .trend{font-size:12px;margin-top:8px;display:flex;align-items:center;gap:4px}
+.kpi-card .trend.up{color:var(--success)}
+.kpi-card .trend.down{color:var(--danger)}
+.kpi-card .icon-bg{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.funnel{display:flex;flex-direction:column;gap:4px}
+.funnel-step{display:flex;align-items:center;padding:12px 16px;border-radius:6px;position:relative;overflow:hidden;cursor:pointer;transition:opacity .15s}
+.funnel-step:hover{opacity:.85}
+.funnel-step .step-label{font-size:13px;font-weight:500;z-index:2;white-space:nowrap;color:#fff}
+.funnel-step .step-count{margin-left:auto;font-weight:700;z-index:2;color:#fff}
+.funnel-step .step-rate{font-size:12px;color:#fff;opacity:.8;margin-left:12px;z-index:2}
+.funnel-bar{position:absolute;left:0;top:0;bottom:0;border-radius:6px;opacity:.25}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-2);white-space:nowrap;font-size:12px}
+.table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table tbody tr{cursor:pointer;transition:background .1s}
+.table tbody tr:hover{background:#f1f5f9}
+.status{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 8px;border-radius:4px;font-weight:500}
+.status-active{background:var(--success-light);color:var(--success)}
+.status-pending{background:var(--warning-light);color:var(--warning)}
+.status-inactive{background:#f1f5f9;color:var(--text-3)}
+.status-danger{background:var(--danger-light);color:var(--danger)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}
+.tag-blue{background:var(--primary-light);color:var(--primary)}
+.tag-green{background:var(--success-light);color:var(--success)}
+.tag-orange{background:var(--warning-light);color:var(--warning)}
+.tag-purple{background:var(--purple-light);color:var(--purple)}
+.tag-teal{background:var(--teal-light);color:var(--teal)}
+.tag-red{background:var(--danger-light);color:var(--danger)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:13px;font-weight:500;border-radius:6px;border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-outline{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.journey-track{display:flex;align-items:center;gap:0;overflow-x:auto;padding:20px 0}
+.journey-node{display:flex;flex-direction:column;align-items:center;min-width:100px;position:relative;cursor:pointer}
+.journey-node:hover .node-circle{transform:scale(1.1);transition:transform .15s}
+.journey-node .node-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;z-index:2}
+.journey-node .node-label{font-size:11px;color:var(--text-2);margin-top:8px;text-align:center;white-space:nowrap}
+.journey-node .node-count{font-size:13px;font-weight:600;margin-top:2px}
+.journey-line{flex:1;height:2px;background:var(--border);min-width:30px}
+.journey-line.active{background:var(--primary)}
+.progress-bar{height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;width:100%}
+.progress-fill{height:100%;border-radius:3px}
+.filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;color:var(--text);cursor:pointer}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--primary)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 20px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.role-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--primary);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.role-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.role-card h4{font-size:14px;margin-bottom:4px}
+.role-card .role-perm{font-size:12px;color:var(--text-3);margin-bottom:8px}
+.role-card .role-actions{font-size:12px;color:var(--text-2);line-height:1.8}
+.chart-bar-container{display:flex;align-items:flex-end;gap:12px;height:160px;padding:12px 0}
+.chart-bar-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.chart-bar-item:hover .chart-bar{opacity:.8}
+.chart-bar{width:100%;max-width:40px;border-radius:4px 4px 0 0;transition:height .3s;position:relative}
+.chart-bar-label{font-size:11px;color:var(--text-3)}
+.gate-status{display:flex;align-items:center;gap:8px}
+.gate-dot{width:8px;height:8px;border-radius:50%}
+.gate-dot.pass{background:var(--success)}.gate-dot.fail{background:var(--danger)}.gate-dot.pending{background:var(--warning)}.gate-dot.blocked{background:var(--text-3)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.text-muted{color:var(--text-3);font-size:12px}
+.text-success{color:var(--success)}.text-danger{color:var(--danger)}.text-warning{color:var(--warning)}
+.fw-600{font-weight:600}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:40px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:760px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:5;border-radius:12px 12px 0 0}
+.modal-header h3{font-size:17px;font-weight:600}
+.modal-close{width:32px;height:32px;border-radius:6px;border:none;background:#f1f5f9;color:var(--text-2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--danger-light);color:var(--danger)}
+.modal-body{padding:24px}
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;padding-bottom:20px}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-item .tl-dot{position:absolute;left:-24px;top:2px;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--border)}
+.timeline-item.done .tl-dot{background:var(--success)}
+.timeline-item.current .tl-dot{background:var(--warning)}
+.timeline-item.pending .tl-dot{background:#fff;border-color:var(--border)}
+.timeline-item .tl-time{font-size:11px;color:var(--text-3);margin-bottom:2px}
+.timeline-item .tl-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.timeline-item .tl-desc{font-size:12px;color:var(--text-2);line-height:1.5}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--sidebar-bg);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:200;transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.detail-section{margin-bottom:20px}
+.detail-section h4{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
+.detail-grid .dg-item{display:flex;flex-direction:column;gap:2px}
+.detail-grid .dg-label{font-size:11px;color:var(--text-3)}
+.detail-grid .dg-value{font-size:14px;font-weight:500}
+.empty-row{text-align:center;padding:40px;color:var(--text-3);font-size:13px}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-header"><h2>中医院获客平台</h2><p>运营管理系统 v1.0</p></div>
+    <div class="sidebar-nav">
+      <div class="nav-section-title">核心看板</div>
+      <div class="nav-item active" onclick="navPage('dashboard',this)"><span class="nav-icon">📊</span> 数据看板</div>
+      <div class="nav-item" onclick="navPage('funnel',this)"><span class="nav-icon">🔻</span> GMV漏斗</div>
+      <div class="nav-section-title">渠道管理</div>
+      <div class="nav-item" onclick="navPage('hospitals',this)"><span class="nav-icon">🏥</span> 医院管理</div>
+      <div class="nav-item" onclick="navPage('departments',this)"><span class="nav-icon">📋</span> 科室配置</div>
+      <div class="nav-section-title">用户运营</div>
+      <div class="nav-item" onclick="navPage('journey',this)"><span class="nav-icon">🛤️</span> 客户旅程</div>
+      <div class="nav-item" onclick="navPage('courses',this)"><span class="nav-icon">📚</span> 课程产品</div>
+      <div class="nav-item" onclick="navPage('leads',this)"><span class="nav-icon">👤</span> 线索池</div>
+      <div class="nav-section-title">质量与风险</div>
+      <div class="nav-item" onclick="navPage('quality',this)"><span class="nav-icon">⚠️</span> 质量监控</div>
+      <div class="nav-item" onclick="navPage('gates',this)"><span class="nav-icon">🚪</span> 决策门</div>
+      <div class="nav-section-title">系统</div>
+      <div class="nav-item" onclick="navPage('roles',this)"><span class="nav-icon">👥</span> 角色权限</div>
+      <div class="nav-item" onclick="navPage('config',this)"><span class="nav-icon">⚙️</span> 系统配置</div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left"><h1 id="pageTitle">数据看板</h1></div>
+      <div class="topbar-right">
+        <select id="topbarHospital" onchange="T('已切换医院筛选：'+this.value)"><option>全部医院</option><option>市中医院</option><option>区中医院</option><option>省中医院</option></select>
+        <select id="topbarDate" onchange="T('已切换时间范围：'+this.value)"><option>近30天</option><option>近7天</option><option>近90天</option><option>全部</option></select>
+        <div class="user-info"><div class="avatar">运</div><span>运营管理员</span></div>
+      </div>
+    </div>
+    <div class="content" id="contentArea"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ========== DATA ========== */
+var LEADS=[
+{name:"王阿姨",phone:"138****6291",source:"诊后推荐",dept:"康复科",stage:"已完课",stageColor:"green",course:"4周太极主题班",teacher:"陈老师",amount:1299,progress:100,journey:[
+{t:"2026-09-02 10:15",title:"医生推荐",desc:"康复科张医生诊后一句话推荐，发放卡片二维码",state:"done"},
+{t:"2026-09-02 10:18",title:"扫码进入小程序",desc:"通过诊后卡片扫码进入健康测评页",state:"done"},
+{t:"2026-09-02 10:22",title:"授权手机号",desc:"在测评结果页授权手机号",state:"done"},
+{t:"2026-09-02 10:25",title:"添加企业微信",desc:"自动跳转企微，添加班主任陈老师",state:"done"},
+{t:"2026-09-03 09:00",title:"进入3天太极体验营",desc:"班主任引导进入体验营，完成Day1打卡",state:"done"},
+{t:"2026-09-05 18:00",title:"体验营完课",desc:"3天体验营全勤，完成全部任务",state:"done"},
+{t:"2026-09-06 14:30",title:"主动咨询",desc:"在企微群主动询问4周太极班详情",state:"done"},
+{t:"2026-09-06 15:20",title:"首单支付",desc:"购买4周太极主题班 ¥1,299，微信支付成功",state:"done"},
+{t:"2026-09-07~10-04",title:"4周核心课程履约",desc:"每周3次课程+每日打卡，完课率100%",state:"done"},
+{t:"2026-10-05",title:"续费转化",desc:"续费年度兴趣会员 ¥3,999",state:"done"}
+]},
+{name:"李叔叔",phone:"139****3827",source:"诊后推荐",dept:"骨科",stage:"履约中",stageColor:"purple",course:"14天太极进阶行动方案",teacher:"陈老师",amount:499,progress:64,journey:[
+{t:"2026-09-20 11:00",title:"医生条件推荐",desc:"骨科李医生诊后根据术后恢复情况推荐太极进阶方案",state:"done"},
+{t:"2026-09-20 11:05",title:"扫码进入",desc:"诊后卡片扫码",state:"done"},
+{t:"2026-09-20 11:08",title:"授权+加企微",desc:"授权手机号并添加企微",state:"done"},
+{t:"2026-09-21 09:00",title:"进入体验营",desc:"进入3天太极体验营",state:"done"},
+{t:"2026-09-23 18:00",title:"体验营完课",desc:"完成3天体验营全勤",state:"done"},
+{t:"2026-09-24 10:00",title:"主动咨询",desc:"询问14天进阶方案详情",state:"done"},
+{t:"2026-09-24 10:30",title:"首单支付",desc:"14天太极进阶行动方案 ¥499",state:"done"},
+{t:"2026-09-25~至今",title:"14天课程履约中",desc:"Day 9/14，当前完课率64%",state:"current"},
+{t:"待定",title:"完课",desc:"预计10月8日完课",state:"pending"},
+{t:"待定",title:"续费引导",desc:"完课后引导4周核心课程",state:"pending"}
+]},
+{name:"张奶奶",phone:"137****0415",source:"候诊推荐",dept:"康复科",stage:"体验中",stageColor:"orange",course:"3天太极体验营",teacher:"—",amount:0,progress:33,journey:[
+{t:"2026-10-05 08:30",title:"护士集中推荐",desc:"候诊区护士张某集中引导，发放宣传页二维码",state:"done"},
+{t:"2026-10-05 08:35",title:"扫码进入",desc:"候诊区宣传页扫码",state:"done"},
+{t:"2026-10-05 08:40",title:"授权+加企微",desc:"授权手机号，添加企微",state:"done"},
+{t:"2026-10-06 09:00",title:"进入体验营",desc:"进入3天太极体验营",state:"done"},
+{t:"2026-10-07 09:00",title:"Day2打卡",desc:"完成Day2体验任务",state:"current"},
+{t:"待定",title:"体验营完课",desc:"Day3完成后可进入咨询成交环节",state:"pending"},
+{t:"待定",title:"主动咨询",desc:"体验营价值交付后引导咨询",state:"pending"},
+{t:"待定",title:"首单支付",desc:"推荐7天太极入门方案 ¥299",state:"pending"}
+]},
+{name:"刘女士",phone:"136****8203",source:"诊后推荐",dept:"康复科",stage:"已咨询",stageColor:"blue",course:"7天东方食养入门",teacher:"—",amount:0,progress:80,journey:[
+{t:"2026-09-28 14:00",title:"医生推荐",desc:"康复科张医生诊后推荐",state:"done"},
+{t:"2026-09-28 14:05",title:"扫码+授权+企微",desc:"一站式完成",state:"done"},
+{t:"2026-09-29 09:00",title:"进入体验营",desc:"进入3天食养体验营",state:"done"},
+{t:"2026-10-01 18:00",title:"体验营完课",desc:"3天食养体验营全勤",state:"done"},
+{t:"2026-10-02 10:00",title:"主动咨询",desc:"询问7天东方食养入门方案",state:"done"},
+{t:"待定",title:"首单支付",desc:"等待用户决策，7天东方食养入门 ¥249",state:"current"}
+]},
+{name:"陈伯伯",phone:"135****6178",source:"复查推荐",dept:"骨科",stage:"已加企微",stageColor:"blue",course:"—",teacher:"—",amount:0,progress:20,journey:[
+{t:"2026-10-07 09:30",title:"护士协助推荐",desc:"骨科复查时护士李某协助扫码推荐",state:"done"},
+{t:"2026-10-07 09:35",title:"扫码+授权+企微",desc:"护士协助完成授权并添加企微",state:"done"},
+{t:"待定",title:"进入体验营",desc:"班主任将在24小时内引导进入体验营",state:"current"},
+{t:"待定",title:"体验营完课",desc:"—",state:"pending"},
+{t:"待定",title:"咨询成交",desc:"—",state:"pending"}
+]},
+{name:"赵阿姨",phone:"133****4592",source:"诊后推荐",dept:"康复科",stage:"已退款",stageColor:"red",course:"7天太极入门行动方案",teacher:"陈老师",amount:-299,progress:15,journey:[
+{t:"2026-09-15 10:00",title:"医生推荐",desc:"康复科张医生诊后推荐",state:"done"},
+{t:"2026-09-15 10:05",title:"扫码+授权+企微",desc:"一站式完成",state:"done"},
+{t:"2026-09-16 09:00",title:"进入体验营",desc:"进入3天太极体验营",state:"done"},
+{t:"2026-09-18 18:00",title:"体验营完课",desc:"3天体验营全勤",state:"done"},
+{t:"2026-09-19 10:00",title:"主动咨询+首单",desc:"购买7天太极入门方案 ¥299",state:"done"},
+{t:"2026-09-21 14:00",title:"申请退款",desc:"用户反馈身体不适，无法完成动作练习",state:"done"},
+{t:"2026-09-21 16:00",title:"退款完成",desc:"7天无理由退款，全额退款 ¥299",state:"done"},
+{t:"—",title:"归因分析",desc:"退款原因：身体不适。改进方向：加强安全筛查，推荐前确认身体状态",state:"done"}
+]}
+];
+var HOSPITALS=[
+{name:"市中医院",contact:"张主任 · 康复科",plan:"S2 科室标杆型",planColor:"green",depts:"康复科、骨科",reach:3200,leads:384,orders:62,gmv:48620,gates:[1,1,1,1,0,-1],status:"运行中",statusClass:"status-active",resources:[
+{item:"场地",detail:"康复科候诊区、体检中心休息区",status:"已确认"},
+{item:"院方背书",detail:"科室健康教育项目（非诊疗）",status:"已确认"},
+{item:"公众号",detail:"市中医院官方公众号（月活2万）",status:"待审核"},
+{item:"可协同职工",detail:"护士2人、健康教育岗1人",status:"已确认"},
+{item:"OA/工作台",detail:"暂未接入",status:"未配置"}
+]},
+{name:"区中医院",contact:"李主任 · 针灸科",plan:"S1 系统驱动型",planColor:"blue",depts:"—",reach:0,leads:0,orders:0,gmv:0,gates:[0,-1,-1,-1,-1,-1],status:"筹备中",statusClass:"status-pending",resources:[
+{item:"场地",detail:"待确认",status:"待确认"},
+{item:"院方背书",detail:"待签订合作协议",status:"待审核"},
+{item:"公众号",detail:"区中医院公众号（月活5千）",status:"待审核"},
+{item:"可协同职工",detail:"待确认",status:"待确认"},
+{item:"OA/工作台",detail:"暂未接入",status:"未配置"}
+]},
+{name:"省中医院",contact:"王院长 · 全院",plan:"S5 联合连续服务型",planColor:"teal",depts:"—",reach:0,leads:0,orders:0,gmv:0,gates:[-1,-1,-1,-1,-1,-1],status:"待S2验证",statusClass:"status-inactive",resources:[
+{item:"场地",detail:"待S2验证通过后启动",status:"未配置"},
+{item:"院方背书",detail:"待启动",status:"未配置"},
+{item:"公众号",detail:"省中医院公众号（月活8万）",status:"未配置"},
+{item:"可协同职工",detail:"待启动",status:"未配置"},
+{item:"OA/工作台",detail:"暂未接入",status:"未配置"}
+]}
+];
+var COURSES=[
+{name:"健康测评·动作建议",cat:"通用",level:"免费前置",levelColor:"green",duration:"1次",price:0,orders:"—",completion:"—",refund:"—",status:"上线",desc:"用户扫码后填写的健康自评问卷，给出一个动作建议+短内容样例，引导授权手机号+企微"},
+{name:"3天太极体验营",cat:"运动练习",level:"体验营",levelColor:"blue",duration:"3天",price:0,orders:"—",completion:"62.1%",refund:"—",status:"上线",desc:"限定3-5天、限定任务、有限反馈。证明服务方式和执行价值，不产生结算"},
+{name:"7天太极入门行动方案",cat:"运动练习",level:"首单",levelColor:"orange",duration:"7天",price:299,orders:18,completion:"78%",refund:"7%",status:"上线",desc:"明确服务、周期和退款。完成一个可感知的小目标。低门槛但可交付完整结果"},
+{name:"14天太极进阶行动方案",cat:"运动练习",level:"首单",levelColor:"orange",duration:"14天",price:499,orders:10,completion:"70%",refund:"10%",status:"上线",desc:"适合有一定基础的太极练习者，进阶动作学习与日常练习"},
+{name:"4周太极主题班",cat:"运动练习",level:"核心",levelColor:"purple",duration:"4周",price:1299,orders:8,completion:"75%",refund:"5%",status:"上线",desc:"更完整的主题学习与行动，形成主要GMV和续费基础"},
+{name:"8周瑜伽康复主题班",cat:"运动练习",level:"核心",levelColor:"purple",duration:"8周",price:2199,orders:6,completion:"67%",refund:"0%",status:"上线",desc:"8周深度瑜伽康复训练，适合术后恢复和慢性疼痛管理"},
+{name:"7天东方食养入门",cat:"饮食营养",level:"首单",levelColor:"orange",duration:"7天",price:249,orders:14,completion:"72%",refund:"7%",status:"上线",desc:"东方食养入门，家庭饮食执行方案"},
+{name:"4周健康营养主题班",cat:"饮食营养",level:"核心",levelColor:"purple",duration:"4周",price:1199,orders:5,completion:"80%",refund:"0%",status:"上线",desc:"4周健康营养深度学习，形成饮食习惯改变"},
+{name:"14天气血调理方案",cat:"中医调养",level:"首单",levelColor:"orange",duration:"14天",price:499,orders:12,completion:"75%",refund:"0%",status:"上线",desc:"气血调理方案，日常调养与生活方式教育"},
+{name:"年度兴趣会员",cat:"综合",level:"增值",levelColor:"teal",duration:"12月",price:3999,orders:3,completion:"—",refund:"0%",status:"测试中",desc:"解决更深或更长期需求，提升LTV"}
+];
+var DEPTS=[
+{name:"康复科",target:"就诊后/复诊患者",rule:"医生一句话推荐",action:"口头+卡片二维码",handler:"护士张某",courses:["太极","瑜伽"],scene:"候诊/诊后",status:"运行中",statusClass:"status-active"},
+{name:"骨科",target:"术后康复/慢性疼痛",rule:"医生条件推荐",action:"口头+卡片二维码",handler:"护士李某",courses:["普拉提","瑜伽"],scene:"诊后/复查",status:"运行中",statusClass:"status-active"},
+{name:"内科",target:"慢性病管理患者",rule:"护士集中承接",action:"统一曝光+服务台",handler:"健康教育岗王某",courses:["食养","营养"],scene:"候诊/出院随访",status:"筹备中",statusClass:"status-pending"},
+{name:"针灸科",target:"调理需求患者",rule:"待定",action:"待定",handler:"—",courses:["气血调理"],scene:"诊后",status:"未启动",statusClass:"status-inactive"}
+];
+var GATES=[
+{code:"G0",name:"合作门",question:"医院是否给出真实可执行的角色和边界？",evidence:"负责人已确认、书面范围已签、品牌/数据/商业边界已明确",status:"pass",statusText:"✅ 通过",criteria:"负责人确认 + 书面范围签署 + 品牌/数据/商业边界明确",failAction:"—"},
+{code:"G1",name:"执行门",question:"医生、护士是否真的完成触达？",evidence:"实际推荐1,280次（约定值2,000次的64%）",status:"pass",statusText:"✅ 通过",criteria:"实际推荐次数≥约定值60% + 有推荐记录",failAction:"暂停扩量，回到培训和SOP优化"},
+{code:"G2",name:"价值门",question:"用户是否愿意授权、到课并完成体验？",evidence:"授权384人、到课218人、体验完成率62.1%",status:"pass",statusText:"✅ 通过",criteria:"留资率≥10% + 体验到课率≥50% + 体验完成率≥50%",failAction:"降低触达量，优化体验营内容与承接"},
+{code:"G3",name:"商业门",question:"用户是否愿意为下一阶段付费？",evidence:"主动咨询95人、首单62单、支付成功率98.8%",status:"pass",statusText:"✅ 通过",criteria:"咨询率≥30% + 付费率≥15% + 支付成功率≥95%",failAction:"优化成交话术与商业页，暂停扩量"},
+{code:"G4",name:"履约门",question:"产品是否安全、可交付并带来阶段进展？",evidence:"完课率72.6%、满意度4.3/5、服务成本待核算",status:"pending",statusText:"⏳ 评估中",criteria:"完课率≥70% + 满意度≥4.0 + 退款率≤5% + 单位服务成本可核算",failAction:"降低承诺、改服务或停止扩量"},
+{code:"G5",name:"规模门",question:"去掉关键个人后是否还能复制？",evidence:"科室配置包沉淀中、单位经济待验证",status:"blocked",statusText:"🔒 待启动",criteria:"科室配置包完成 + 单位经济模型验证 + 不依赖特定个人",failAction:"保留为项目制或停止扩院"}
+];
+
+/* ========== STATE ========== */
+var curPage='dashboard';
+var leadFilter={status:'',dept:'',source:'',search:''};
+var hospitalFilter={status:'',plan:'',search:''};
+var courseFilter={cat:'',level:'',_tab:'list'};
+
+/* ========== RENDER ========== */
+function R(){document.getElementById('contentArea').innerHTML=P[curPage]();}
+var P={};
+P.dashboard=function(){
+var kpiData=[
+{label:"月度GMV",value:"¥48,620",trend:"↑ 23.5% vs 上月",tc:"up",icon:"💰",ib:"var(--primary-light)",ic:"var(--primary)",fn:"dashboardGMV"},
+{label:"可触达人数",value:"3,200",unit:"人",trend:"↑ 12.0%",tc:"up",icon:"👥",ib:"var(--teal-light)",ic:"var(--teal)",fn:"dashboardReach"},
+{label:"有效线索（授权+企微）",value:"384",unit:"人",trend:"留资率 12.0%",tc:"up",icon:"📱",ib:"var(--purple-light)",ic:"var(--purple)",fn:"dashboardLeads"},
+{label:"首单成交",value:"62",unit:"单",trend:"付费率 16.1%",tc:"up",icon:"✅",ib:"var(--success-light)",ic:"var(--success)",fn:"dashboardOrders"},
+{label:"退款率",value:"4.8",unit:"%",trend:"↓ 1.2%",tc:"down",icon:"↩️",ib:"var(--danger-light)",ic:"var(--danger)",fn:"dashboardRefund"}
+];
+var kpiHTML=kpiData.map(function(k){return '<div class="kpi-card" onclick="'+k.fn+'()"><div class="label">'+k.label+'</div><div class="value">'+k.value+'<span class="unit">'+(k.unit||'')+'</span></div><div class="trend '+k.tc+'">'+k.trend+'</div><div class="icon-bg" style="background:'+k.ib+';color:'+k.ic+'">'+k.icon+'</div></div>';}).join('');
+var weeks=['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+var bars=[30,25,45,55,50,65,70,60,80,75,90,100];
+var barHTML=weeks.map(function(w,i){var c=bars[i]>=90?'var(--success)':'var(--primary)';return '<div class="chart-bar-item" onclick="T(\'第'+(i+1)+'周GMV：¥'+(15000+bars[i]*300).toLocaleString()+'\')"><div class="chart-bar" style="height:'+bars[i]+'%;background:'+c+'"></div><div class="chart-bar-label">'+w+'</div></div>';}).join('');
+var jn=[
+{label:"可触达",count:"3,200",bg:"var(--teal-light)",color:"var(--teal)",char:"触"},
+{label:"实际推荐",count:"1,280",bg:"var(--primary-light)",color:"var(--primary)",char:"推"},
+{label:"扫码进入",count:"620",bg:"var(--purple-light)",color:"var(--purple)",char:"扫"},
+{label:"授权手机号",count:"384",bg:"var(--purple-light)",color:"var(--purple)",char:"授"},
+{label:"添加企微",count:"351",bg:"var(--purple-light)",color:"var(--purple)",char:"企"},
+{label:"体验到课",count:"218",bg:"var(--warning-light)",color:"var(--warning)",char:"体"},
+{label:"主动咨询",count:"95",bg:"var(--warning-light)",color:"var(--warning)",char:"询"},
+{label:"首单支付",count:"62",bg:"var(--success-light)",color:"var(--success)",char:"付"},
+{label:"完课",count:"45",bg:"#f1f5f9",color:"var(--text-3)",char:"完"},
+{label:"续费",count:"18",bg:"#f1f5f9",color:"var(--text-3)",char:"续"}
+];
+var journeyHTML=jn.map(function(n,i){var line=i<jn.length-1?'<div class="journey-line '+(i<7?'active':'')+'"></div>':'';return '<div class="journey-node" onclick="navToLeads(\''+n.label+'\')"><div class="node-circle" style="background:'+n.bg+';color:'+n.color+'">'+n.char+'</div><div class="node-label">'+n.label+'</div><div class="node-count">'+n.count+'</div></div>'+line;}).join('');
+return '<div class="kpi-grid">'+kpiHTML+'</div><div class="grid-2"><div class="card"><div class="card-header"><h3>GMV 趋势（近12周）</h3><button class="btn btn-outline btn-sm" onclick="T(\'正在导出GMV趋势数据...\')">导出</button></div><div class="card-body"><div class="chart-bar-container">'+barHTML+'</div></div></div><div class="card"><div class="card-header"><h3>方案执行概览</h3><span class="tag tag-green">S2 科室标杆型</span></div><div class="card-body"><table class="table"><thead><tr><th>方案</th><th>状态</th><th>覆盖科室</th><th>当前阶段</th></tr></thead><tbody><tr onclick="navPage(\'hospitals\',document.querySelectorAll(\'.nav-item\')[3]);showHospitalDetail(0)"><td class="fw-600">S2 科室标杆型</td><td><span class="status status-active">运行中</span></td><td>康复科、骨科</td><td><span class="tag tag-blue">履约期</span></td></tr><tr onclick="navPage(\'hospitals\',document.querySelectorAll(\'.nav-item\')[3]);showHospitalDetail(1)"><td>S1 系统驱动型</td><td><span class="status status-pending">筹备中</span></td><td>—</td><td><span class="tag tag-orange">待G0通过</span></td></tr><tr onclick="navPage(\'hospitals\',document.querySelectorAll(\'.nav-item\')[3]);showHospitalDetail(2)"><td>S5 联合连续服务</td><td><span class="status status-inactive">未启动</span></td><td>—</td><td><span class="text-muted">待S2验证</span></td></tr></tbody></table></div></div></div><div class="card"><div class="card-header"><h3>客户旅程实时追踪</h3><button class="btn btn-outline btn-sm" onclick="navPage(\'journey\',document.querySelectorAll(\'.nav-item\')[5])">查看详情</button></div><div class="card-body"><div class="journey-track">'+journeyHTML+'</div></div></div>';
+};
+P.funnel=function(){
+var steps=[
+{label:"单院月可触达人数",count:"3,200",rate:"100%",color:"var(--teal)",width:"100%"},
+{label:"实际推荐（医生/护士触达）",count:"1,280",rate:"40.0%",color:"var(--primary)",width:"40%"},
+{label:"扫码进入小程序",count:"620",rate:"19.4%",color:"var(--primary)",width:"19%"},
+{label:"授权手机号 + 添加企微（留资率）",count:"384",rate:"12.0%",color:"var(--purple)",width:"12%"},
+{label:"体验到课率",count:"218",rate:"6.8%",color:"var(--warning)",width:"6.8%"},
+{label:"主动咨询",count:"95",rate:"3.0%",color:"var(--warning)",width:"3%"},
+{label:"首单支付（付费率）",count:"62",rate:"1.9%",color:"var(--success)",width:"1.9%"}
+];
+var funnelHTML=steps.map(function(s){return '<div class="funnel-step" style="background:'+s.color+'" onclick="navToLeads(\''+s.label+'\')"><span class="funnel-bar" style="width:'+s.width+';background:'+s.color+'"></span><span class="step-label">'+s.label+'</span><span class="step-count">'+s.count+'</span><span class="step-rate">'+s.rate+'</span></div>';}).join('');
+var formulaData=[
+{metric:"单院月可触达人数",current:"3,200",target:"5,000",gap:"-1,800",gc:"text-danger",dir:"增加科室覆盖、扩展场景"},
+{metric:"留资率",current:"12.0%",target:"15%",gap:"-3%",gc:"text-danger",dir:"优化护士承接SOP、简化授权流程"},
+{metric:"体验到课率",current:"56.8%",target:"65%",gap:"-8.2%",gc:"text-danger",dir:"课前提醒+子女协助、线上任务降门槛"},
+{metric:"付费率",current:"28.4%",target:"35%",gap:"-6.6%",gc:"text-danger",dir:"优化体验营价值交付、老师答疑质量"},
+{metric:"客单价",current:"¥784",target:"¥899",gap:"-¥115",gc:"text-danger",dir:"引导4/8周核心课程升级"},
+{metric:"退款率",current:"4.8%",target:"≤5%",gap:"达标",gc:"text-success",dir:"持续监控产品质量"}
+];
+var formulaHTML='<table class="table"><thead><tr><th>指标</th><th>当前值</th><th>目标值</th><th>差距</th><th>提升方向</th></tr></thead><tbody>'+formulaData.map(function(f){return '<tr onclick="T(\''+f.metric+'：当前'+f.current+'，目标'+f.target+'\')"><td>'+f.metric+'</td><td class="fw-600">'+f.current+'</td><td>'+f.target+'</td><td class="'+f.gc+'">'+f.gap+'</td><td>'+f.dir+'</td></tr>';}).join('')+'</tbody></table>';
+return '<div class="card"><div class="card-header"><h3>GMV 漏斗分析</h3><span class="text-muted">S2 科室标杆型 · 近30天 · 点击步骤查看线索</span></div><div class="card-body"><div class="funnel">'+funnelHTML+'</div></div></div><div class="card"><div class="card-header"><h3>GMV 公式拆解</h3></div><div class="card-body">'+formulaHTML+'<div style="margin-top:16px;padding:16px;background:var(--primary-light);border-radius:8px;font-size:13px;color:var(--primary)"><strong>预估月GMV</strong> = 3,200 × 12% × 56.8% × 28.4% × ¥784 × (1 - 4.8%) = <strong>¥48,620</strong></div></div></div><div class="grid-2"><div class="card"><div class="card-header"><h3>按科室拆分</h3></div><div class="card-body"><table class="table"><thead><tr><th>科室</th><th>触达</th><th>留资</th><th>首单</th><th>GMV</th></tr></thead><tbody><tr onclick="navToLeads(\'康复科\')"><td>康复科</td><td>1,800</td><td>240</td><td>42</td><td class="fw-600">¥32,928</td></tr><tr onclick="navToLeads(\'骨科\')"><td>骨科</td><td>1,000</td><td>108</td><td>16</td><td class="fw-600">¥12,544</td></tr><tr onclick="navToLeads(\'内科\')"><td>内科（筹备）</td><td>400</td><td>36</td><td>4</td><td class="fw-600">¥3,136</td></tr></tbody></table></div></div><div class="card"><div class="card-header"><h3>按课程类目拆分</h3></div><div class="card-body"><table class="table"><thead><tr><th>类目</th><th>首单</th><th>客单价</th><th>GMV</th><th>退款</th></tr></thead><tbody><tr onclick="navToCourses(\'运动练习\')"><td>运动练习（太极/瑜伽/普拉提）</td><td>28</td><td>¥799</td><td class="fw-600">¥22,372</td><td>2单</td></tr><tr onclick="navToCourses(\'饮食营养\')"><td>饮食营养（食养/营养）</td><td>22</td><td>¥749</td><td class="fw-600">¥16,478</td><td>1单</td></tr><tr onclick="navToCourses(\'中医调养\')"><td>中医调养与形象</td><td>12</td><td>¥849</td><td class="fw-600">¥10,188</td><td>0单</td></tr></tbody></table></div></div></div>';
+};
+P.hospitals=function(){
+var rows=HOSPITALS.filter(function(h){
+if(hospitalFilter.status&&hospitalFilter.status!=='全部状态'&&h.status!==hospitalFilter.status)return false;
+if(hospitalFilter.plan&&hospitalFilter.plan!=='全部方案'&&h.plan.indexOf(hospitalFilter.plan.split(' ')[0])===-1)return false;
+if(hospitalFilter.search&&h.name.indexOf(hospitalFilter.search)===-1)return false;
+return true;
+});
+if(rows.length===0)return hospitalFilterBar()+'<div class="card"><div class="empty-row">未找到匹配的医院</div></div>';
+var tableHTML=rows.map(function(h){var idx=HOSPITALS.indexOf(h);var gateHTML=h.gates.map(function(g){var cls=g===1?'pass':g===0?'pending':'blocked';return '<span class="gate-dot '+cls+'"></span>';}).join('');
+return '<tr onclick="showHospitalDetail('+idx+')"><td class="fw-600">'+h.name+'<br><span class="text-muted">'+h.contact+'</span></td><td><span class="tag tag-'+h.planColor+'">'+h.plan+'</span></td><td>'+(h.depts||'—')+'</td><td>'+(h.reach||'—')+'</td><td>'+(h.leads||'—')+'</td><td>'+(h.orders||'—')+'</td><td class="fw-600">'+(h.gmv?'¥'+h.gmv.toLocaleString():'—')+'</td><td><div class="gate-status">'+gateHTML+'</div></td><td><span class="status '+h.statusClass+'">'+h.status+'</span></td><td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="showHospitalDetail('+idx+')">详情</button></td></tr>';}).join('');
+return hospitalFilterBar()+'<div class="card"><table class="table"><thead><tr><th>医院</th><th>方案</th><th>覆盖科室</th><th>可触达/月</th><th>留资</th><th>首单</th><th>GMV(月)</th><th>决策门</th><th>状态</th><th>操作</th></tr></thead><tbody>'+tableHTML+'</tbody></table></div>';
+};
+function hospitalFilterBar(){return '<div class="filter-bar"><input type="text" placeholder="搜索医院名称..." style="width:200px;" oninput="hospitalFilter.search=this.value;R()" value="'+(hospitalFilter.search||'')+'"><select onchange="hospitalFilter.status=this.value;R()"><option>全部状态</option><option>运行中</option><option>筹备中</option><option>待S2验证</option></select><select onchange="hospitalFilter.plan=this.value;R()"><option>全部方案</option><option>S1 系统驱动</option><option>S2 科室标杆</option><option>S5 联合连续</option></select><button class="btn btn-primary" onclick="T(\'新增医院合作：请填写合作协议模板(G0门)后提交\')">+ 新增医院合作</button></div>';}
+P.departments=function(){
+var rows=DEPTS.map(function(d,i){var courseTags=d.courses.map(function(c){return '<span class="tag tag-blue">'+c+'</span>';}).join(' ');return '<tr onclick="showDeptDetail('+i+')"><td class="fw-600">'+d.name+'</td><td>'+d.target+'</td><td>'+d.rule+'</td><td>'+d.action+'</td><td>'+d.handler+'</td><td>'+courseTags+'</td><td>'+d.scene+'</td><td><span class="status '+d.statusClass+'">'+d.status+'</span></td></tr>';}).join('');
+var materials=[{name:"合作协议模板",type:"文档",ver:"v3.0",date:"2026-09-15",status:"已审核"},{name:"活动SOP",type:"文档",ver:"v2.1",date:"2026-09-20",status:"已审核"},{name:"宣传页（院内版）",type:"设计稿",ver:"v1.5",date:"2026-09-28",status:"已审核"},{name:"授权说明",type:"文档",ver:"v2.0",date:"2026-09-10",status:"已审核"},{name:"课程边界说明",type:"文档",ver:"v1.3",date:"2026-09-25",status:"已审核"},{name:"危机话术",type:"文档",ver:"v1.0",date:"2026-09-05",status:"待审核"},{name:"数据看板模板",type:"系统",ver:"v1.0",date:"2026-09-30",status:"已部署"}];
+var matHTML=materials.map(function(m){var stCls=m.status==='待审核'?'status-pending':'status-active';return '<tr onclick="T(\'预览：'+m.name+' '+m.ver+'\')"><td>'+m.name+'</td><td>'+m.type+'</td><td>'+m.ver+'</td><td>'+m.date+'</td><td><span class="status '+stCls+'">'+m.status+'</span></td><td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="T(\'预览：'+m.name+' '+m.ver+'\')">预览</button></td></tr>';}).join('');
+return '<div class="card"><div class="card-header"><h3>科室配置包</h3><button class="btn btn-primary btn-sm" onclick="T(\'新增科室配置：请选择科室并填写推荐规则\')">+ 新增科室配置</button></div><div class="card-body"><table class="table"><thead><tr><th>科室</th><th>适配人群</th><th>推荐规则</th><th>推荐动作</th><th>问题处理人</th><th>课程候选</th><th>场景</th><th>状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div><div class="card"><div class="card-header"><h3>标准物料包</h3></div><div class="card-body"><table class="table"><thead><tr><th>物料</th><th>类型</th><th>版本</th><th>更新时间</th><th>状态</th><th>操作</th></tr></thead><tbody>'+matHTML+'</tbody></table></div></div>';
+};
+P.journey=function(){
+var nodes=[
+{label:"可触达",count:"3,200",bg:"var(--teal-light)",color:"var(--teal)",char:"触",active:true},
+{label:"推荐",count:"1,280",bg:"var(--primary-light)",color:"var(--primary)",char:"推",active:true},
+{label:"扫码",count:"620",bg:"var(--purple-light)",color:"var(--purple)",char:"扫",active:true},
+{label:"授权",count:"384",bg:"var(--purple-light)",color:"var(--purple)",char:"授",active:true},
+{label:"加企微",count:"351",bg:"var(--purple-light)",color:"var(--purple)",char:"企",active:true},
+{label:"到课",count:"218",bg:"var(--warning-light)",color:"var(--warning)",char:"体",active:true},
+{label:"咨询",count:"95",bg:"var(--warning-light)",color:"var(--warning)",char:"询",active:true},
+{label:"首单",count:"62",bg:"var(--success-light)",color:"var(--success)",char:"付",active:true},
+{label:"完课",count:"45",bg:"#f1f5f9",color:"var(--text-3)",char:"完",active:false},
+{label:"续费",count:"18",bg:"#f1f5f9",color:"var(--text-3)",char:"续",active:false},
+{label:"转介绍",count:"7",bg:"#f1f5f9",color:"var(--text-3)",char:"转",active:false}
+];
+var jHTML=nodes.map(function(n,i){var line=i<nodes.length-1?'<div class="journey-line '+(n.active?'active':'')+'"></div>':'';return '<div class="journey-node" onclick="navToLeads(\''+n.label+'\')"><div class="node-circle" style="background:'+n.bg+';color:'+n.color+'">'+n.char+'</div><div class="node-label">'+n.label+'</div><div class="node-count">'+n.count+'</div></div>'+line;}).join('');
+var convData=[
+{stage:"可触达 → 实际推荐",ppl:"3,200 → 1,280",rate:"40.0%",target:"≥50%",sc:"text-warning",st:"待提升",attr:"康复科推荐执行率高于骨科"},
+{stage:"推荐 → 扫码进入",ppl:"1,280 → 620",rate:"48.4%",target:"≥55%",sc:"text-warning",st:"待提升",attr:"诊后场景扫码率高于候诊"},
+{stage:"扫码 → 授权手机号",ppl:"620 → 384",rate:"61.9%",target:"≥70%",sc:"text-warning",st:"待提升",attr:"护士协助授权率显著高于自主"},
+{stage:"授权 → 添加企微",ppl:"384 → 351",rate:"91.4%",target:"≥90%",sc:"text-success",st:"达标",attr:"—"},
+{stage:"加企微 → 体验到课",ppl:"351 → 218",rate:"62.1%",target:"≥65%",sc:"text-warning",st:"待提升",attr:"课前提醒+子女协助可提升"},
+{stage:"体验到课 → 主动咨询",ppl:"218 → 95",rate:"43.6%",target:"≥45%",sc:"text-success",st:"接近达标",attr:"老师答疑质量影响咨询率"},
+{stage:"主动咨询 → 首单支付",ppl:"95 → 62",rate:"65.3%",target:"≥60%",sc:"text-success",st:"达标",attr:"—"},
+{stage:"首单 → 完课",ppl:"62 → 45",rate:"72.6%",target:"≥75%",sc:"text-warning",st:"待提升",attr:"掉队召回机制待优化"},
+{stage:"完课 → 续费",ppl:"45 → 18",rate:"40.0%",target:"≥35%",sc:"text-success",st:"达标",attr:"—"}
+];
+var convHTML=convData.map(function(c){return '<tr onclick="navToLeads(\''+c.stage.split('→')[0].trim()+'\')"><td>'+c.stage+'</td><td>'+c.ppl+'</td><td class="fw-600">'+c.rate+'</td><td>'+c.target+'</td><td class="'+c.sc+'">'+c.st+'</td><td>'+c.attr+'</td></tr>';}).join('');
+var sourceData=[
+{source:"诊后推荐",hosp:"市中医院",dept:"康复科",scene:"诊后",tool:"医生一句话",expose:800,auth:132,orders:24,roi:"高"},
+{source:"候诊推荐",hosp:"市中医院",dept:"康复科",scene:"候诊",tool:"护士集中",expose:1000,auth:78,orders:10,roi:"中"},
+{source:"诊后推荐",hosp:"市中医院",dept:"骨科",scene:"诊后",tool:"医生条件",expose:600,auth:72,orders:14,roi:"高"},
+{source:"复查推荐",hosp:"市中医院",dept:"骨科",scene:"复查",tool:"护士协助",expose:400,auth:54,orders:8,roi:"中"},
+{source:"公众号",hosp:"市中医院",dept:"—",scene:"线上",tool:"内容引流",expose:400,auth:48,orders:6,roi:"低"}
+];
+var sourceHTML=sourceData.map(function(s){var rc=s.roi==='高'?'text-success':s.roi==='中'?'text-warning':'text-danger';return '<tr onclick="navToLeads(\''+s.source+'\')"><td>'+s.source+'</td><td>'+s.hosp+'</td><td>'+s.dept+'</td><td>'+s.scene+'</td><td>'+s.tool+'</td><td>'+s.expose+'</td><td>'+s.auth+'</td><td>'+s.orders+'</td><td class="'+rc+'">'+s.roi+'</td></tr>';}).join('');
+return '<div class="card"><div class="card-header"><h3>客户旅程追踪</h3><span class="text-muted">点击节点查看对应线索</span></div><div class="card-body"><div class="journey-track">'+jHTML+'</div></div></div><div class="card"><div class="card-header"><h3>线索转化率分析</h3></div><div class="card-body"><table class="table"><thead><tr><th>转化环节</th><th>人数</th><th>转化率</th><th>目标率</th><th>状态</th><th>归因</th></tr></thead><tbody>'+convHTML+'</tbody></table></div></div><div class="card"><div class="card-header"><h3>触达来源归因</h3></div><div class="card-body"><table class="table"><thead><tr><th>来源</th><th>医院</th><th>科室</th><th>场景</th><th>主要抓手</th><th>曝光</th><th>授权</th><th>首单</th><th>ROI</th></tr></thead><tbody>'+sourceHTML+'</tbody></table></div></div>';
+};
+P.courses=function(){
+var listHTML=COURSES.filter(function(c){if(courseFilter.cat&&courseFilter.cat!=='全部类目'&&c.cat!==courseFilter.cat)return false;if(courseFilter.level&&courseFilter.level!=='全部层级'&&c.level!==courseFilter.level)return false;return true;}).map(function(c){var idx=COURSES.indexOf(c);var stCls=c.status==='测试中'?'status-pending':'status-active';return '<tr onclick="showCourseDetail('+idx+')"><td>'+c.name+'</td><td>'+c.cat+'</td><td><span class="tag tag-'+c.levelColor+'">'+c.level+'</span></td><td>'+c.duration+'</td><td class="fw-600">¥'+(c.price>0?c.price.toLocaleString():'0')+'</td><td>'+(c.orders!=='—'?c.orders:'—')+'</td><td>'+(c.completion!=='—'?c.completion:'—')+'</td><td>'+(c.refund!=='—'?c.refund:'—')+'</td><td><span class="status '+stCls+'">'+c.status+'</span></td><td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="showCourseDetail('+idx+')">编辑</button></td></tr>';}).join('');
+if(courseFilter._tab==='ladder'){var levels=[{n:"① 医院前置免费价值",bg:"#f0fdf4",desc:"单个测评结果 + 一个动作建议 + 短内容样例。引导用户自愿进入手机号+企微链路。不复制完整体验营和付费课。"},{n:"② 企微后体验营",bg:"#ecfdf5",desc:"限定3-5天、限定任务、有限反馈。与医院前置内容不同，证明服务方式和执行价值。不产生结算。"},{n:"③ 首单产品（7-14天行动方案）",bg:"#d1fae5",desc:"明确服务、周期和退款。完成一个可感知的小目标。低门槛但可交付完整结果。"},{n:"④ 核心产品（4/8周主题班）",bg:"#a7f3d0",desc:"提供更完整的主题学习与行动。形成主要GMV和续费基础。"},{n:"⑤ 增值产品（小班陪练/食养计划/年度会员）",bg:"#6ee7b7",desc:"解决更深或更长期需求。提升LTV，但需要控制人工成本。"}];var ladderHTML=levels.map(function(l,i){var radius=i===0?'8px 8px 0 0':i===levels.length-1?'0 0 8px 8px':'0';return '<div style="padding:16px 20px;background:'+l.bg+';border-radius:'+radius+';cursor:pointer" onclick="T(\'查看梯度层级：'+l.n+'\')"><span class="fw-600">'+l.n+'</span><br><span class="text-muted">'+l.desc+'</span></div>';}).join('');return '<div class="tabs"><div class="tab" onclick="courseFilter._tab=\'list\';R()">课程列表</div><div class="tab active">产品梯度</div><div class="tab" onclick="courseFilter._tab=\'match\';R()">人群匹配</div></div><div class="card"><div class="card-header"><h3>产品梯度配置</h3></div><div class="card-body"><div style="display:flex;flex-direction:column-reverse;gap:4px;">'+ladderHTML+'</div></div></div>';}
+if(courseFilter._tab==='match'){var matchData=[{task:"动作能力、柔韧、稳定性、日常练习",mechanism:"运动练习",cats:["太极","瑜伽","普拉提"],judge:"身体状态、动作风险、练习空间",first:"7天太极入门 / 14天进阶",core:"4周太极班 / 8周瑜伽班"},{task:"饮食结构、家庭饮食执行",mechanism:"饮食营养",cats:["健康营养","东方食养"],judge:"家庭执行条件、饮食限制、疾病营养表达边界",first:"7天东方食养入门",core:"4周健康营养班"},{task:"日常调养、气血状态、形象兴趣",mechanism:"中医调养与形象",cats:["气血调理","中医变美"],judge:"目标是否可由生活方式教育承接、功效表达是否合规",first:"14天气血调理方案",core:"4周气血调理班"}];var rows=matchData.map(function(m){var tags=m.cats.map(function(c){return '<span class="tag tag-blue">'+c+'</span>';}).join(' ');return '<tr onclick="T(\'匹配规则：'+m.mechanism+'\')"><td>'+m.task+'</td><td>'+m.mechanism+'</td><td>'+tags+'</td><td>'+m.judge+'</td><td>'+m.first+'</td><td>'+m.core+'</td></tr>';}).join('');return '<div class="tabs"><div class="tab" onclick="courseFilter._tab=\'list\';R()">课程列表</div><div class="tab" onclick="courseFilter._tab=\'ladder\';R()">产品梯度</div><div class="tab active">人群匹配</div></div><div class="card"><div class="card-header"><h3>人群与课程匹配规则</h3></div><div class="card-body"><table class="table"><thead><tr><th>用户首要任务</th><th>首选课程机制</th><th>对应类目</th><th>必要判断</th><th>推荐首单</th><th>推荐核心</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';}
+return '<div class="tabs"><div class="tab active">课程列表</div><div class="tab" onclick="courseFilter._tab=\'ladder\';R()">产品梯度</div><div class="tab" onclick="courseFilter._tab=\'match\';R()">人群匹配</div></div><div class="filter-bar"><select onchange="courseFilter.cat=this.value;R()"><option>全部类目</option><option>运动练习</option><option>饮食营养</option><option>中医调养</option><option>通用</option><option>综合</option></select><select onchange="courseFilter.level=this.value;R()"><option>全部层级</option><option>免费前置</option><option>体验营</option><option>首单</option><option>核心</option><option>增值</option></select><button class="btn btn-primary" onclick="T(\'新建课程：请填写课程名称、类目、层级、周期、价格\')">+ 新建课程</button></div><div class="card"><table class="table"><thead><tr><th>课程名称</th><th>类目</th><th>层级</th><th>周期</th><th>价格</th><th>首单数</th><th>完课率</th><th>退款率</th><th>状态</th><th>操作</th></tr></thead><tbody>'+listHTML+'</tbody></table></div>';
+};
+P.leads=function(){
+var rows=LEADS.filter(function(l){if(leadFilter.status&&leadFilter.status!=='全部状态'&&l.stage!==leadFilter.status)return false;if(leadFilter.dept&&leadFilter.dept!=='全部科室'&&l.dept!==leadFilter.dept)return false;if(leadFilter.source&&leadFilter.source!=='全部来源'&&l.source!==leadFilter.source)return false;if(leadFilter.search){var s=leadFilter.search.toLowerCase();if(l.name.toLowerCase().indexOf(s)===-1&&l.phone.indexOf(s)===-1)return false;}return true;});
+if(rows.length===0)return leadsFilterBar()+'<div class="card"><div class="empty-row">未找到匹配的线索</div></div>';
+var tableHTML=rows.map(function(l){var idx=LEADS.indexOf(l);var progColor=l.progress===100?'var(--success)':l.progress>=60?'var(--primary)':l.progress>=30?'var(--warning)':'var(--danger)';var amountText=l.amount>0?'<span class="fw-600">¥'+l.amount.toLocaleString()+'</span>':l.amount<0?'<span class="text-danger">'+l.amount+'</span>':'<span class="text-muted">—</span>';if(l.amount===0&&l.stage==='已咨询')amountText='<span class="text-muted">待成交</span>';return '<tr onclick="showLeadDetail('+idx+')"><td>'+l.name+'</td><td>'+l.phone+'</td><td>'+l.source+'</td><td>'+l.dept+'</td><td><span class="tag tag-'+l.stageColor+'">'+l.stage+'</span></td><td>'+(l.course||'—')+'</td><td>'+(l.teacher||'—')+'</td><td>'+amountText+'</td><td><div class="progress-bar"><div class="progress-fill" style="width:'+l.progress+'%;background:'+progColor+'"></div></div></td><td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="showLeadDetail('+idx+')">详情</button></td></tr>';}).join('');
+return leadsFilterBar()+'<div class="card"><table class="table"><thead><tr><th>用户</th><th>手机号</th><th>来源</th><th>科室</th><th>当前阶段</th><th>体验课程</th><th>老师</th><th>首单</th><th>进度</th><th>操作</th></tr></thead><tbody>'+tableHTML+'</tbody></table></div>';
+};
+function leadsFilterBar(){return '<div class="filter-bar"><select onchange="leadFilter.status=this.value;R()"><option>全部状态</option><option>已加企微</option><option>体验中</option><option>已咨询</option><option>履约中</option><option>已完课</option><option>已退款</option></select><select onchange="leadFilter.dept=this.value;R()"><option>全部科室</option><option>康复科</option><option>骨科</option><option>内科</option></select><select onchange="leadFilter.source=this.value;R()"><option>全部来源</option><option>诊后推荐</option><option>候诊推荐</option><option>复查推荐</option><option>公众号</option></select><input type="text" placeholder="搜索手机号/姓名..." style="width:180px;" oninput="leadFilter.search=this.value;R()" value="'+(leadFilter.search||'')+'"><button class="btn btn-primary" onclick="T(\'正在导出'+LEADS.length+'条线索...\')">导出线索</button></div>';}
+P.quality=function(){
+return '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);"><div class="kpi-card" onclick="T(\'退款率详情：当前4.8%，目标≤5%，共3单退款\')"><div class="label">退款率</div><div class="value">4.8<span class="unit">%</span></div><div class="trend down">↓ 1.2%</div><div class="icon-bg" style="background:var(--danger-light);color:var(--danger)">↩️</div></div><div class="kpi-card" onclick="T(\'支付失败率详情：1.2%，共1笔支付失败\')"><div class="label">支付失败率</div><div class="value">1.2<span class="unit">%</span></div><div class="trend down">↓ 0.3%</div><div class="icon-bg" style="background:var(--warning-light);color:var(--warning)">⚠️</div></div><div class="kpi-card" onclick="T(\'投诉详情：共3件投诉，已全部处理\')"><div class="label">投诉数</div><div class="value">3<span class="unit">件</span></div><div class="trend up">↑ 1</div><div class="icon-bg" style="background:var(--danger-light);color:var(--danger)">📢</div></div><div class="kpi-card" onclick="T(\'满意度详情：4.3/5，共收到52条评价\')"><div class="label">满意度</div><div class="value">4.3<span class="unit">/5</span></div><div class="trend up">↑ 0.2</div><div class="icon-bg" style="background:var(--success-light);color:var(--success)">⭐</div></div></div><div class="card"><div class="card-header"><h3>退款原因分类</h3></div><div class="card-body"><table class="table"><thead><tr><th>退款原因</th><th>数量</th><th>占比</th><th>涉及课程</th><th>处理状态</th><th>改进方向</th></tr></thead><tbody><tr onclick="showLeadDetail(5)"><td>产品不匹配</td><td>1</td><td>33%</td><td>7天太极入门</td><td><span class="status status-active">已处理</span></td><td>优化人群匹配规则</td></tr><tr onclick="showLeadDetail(5)"><td>身体不适</td><td>1</td><td>33%</td><td>14天太极进阶</td><td><span class="status status-active">已处理</span></td><td>加强安全筛查</td></tr><tr onclick="showLeadDetail(5)"><td>冲动购买</td><td>1</td><td>33%</td><td>7天食养入门</td><td><span class="status status-active">已处理</span></td><td>延迟成交话术优化</td></tr></tbody></table></div></div><div class="card"><div class="card-header"><h3>投诉与下架风险监控</h3></div><div class="card-body"><table class="table"><thead><tr><th>风险类型</th><th>描述</th><th>严重程度</th><th>责任人</th><th>状态</th></tr></thead><tbody><tr onclick="T(\'风险详情：医疗表达边界 — 已修正，宣传页移除「治疗」字样\')"><td>医疗表达边界</td><td>宣传页出现"治疗"字样（已修正）</td><td><span class="tag tag-red">高</span></td><td>合规</td><td><span class="status status-active">已修正</span></td></tr><tr onclick="T(\'风险详情：品牌使用 — 商业页与医院页面正在分离处理中\')"><td>品牌使用</td><td>商业页未完全与医院页面分离</td><td><span class="tag tag-orange">中</span></td><td>合规/产品</td><td><span class="status status-pending">处理中</span></td></tr><tr onclick="T(\'风险详情：用户授权 — 部分用户授权协议签署不完整，正在补签\')"><td>用户授权</td><td>部分用户授权协议签署不完整</td><td><span class="tag tag-orange">中</span></td><td>运营</td><td><span class="status status-pending">处理中</span></td></tr><tr onclick="T(\'风险详情：疗效暗示 — 老师答疑中出现疗效暗示，已完成全员培训\')"><td>疗效暗示</td><td>老师答疑中出现疗效暗示</td><td><span class="tag tag-red">高</span></td><td>合规/老师</td><td><span class="status status-active">已培训</span></td></tr></tbody></table></div></div>';
+};
+P.gates=function(){
+var rows=GATES.map(function(g,i){var stCls=g.status==='pass'?'status-active':g.status==='pending'?'status-pending':'status-inactive';return '<tr onclick="showGateDetail('+i+')"><td class="fw-600">'+g.code+' '+g.name+'</td><td>'+g.question+'</td><td>'+g.evidence+'</td><td><span class="status '+stCls+'">'+g.statusText+'</span></td><td class="text-muted">'+g.failAction+'</td></tr>';}).join('');
+return '<div class="card"><div class="card-header"><h3>六道决策门 — 当前状态</h3><span class="text-muted">市中医院 · S2科室标杆型 · 点击查看详情</span></div><div class="card-body"><table class="table"><thead><tr><th>决策门</th><th>问题</th><th>证据</th><th>状态</th><th>不通过处理</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+};
+P.roles=function(){
+var roles=[{name:"系统管理员",perm:"全部权限",actions:"系统配置、角色管理、数据导出、方案切换",color:"var(--primary)"},{name:"商务/医院合作",perm:"渠道管理、合作协议",actions:"医院管理、科室配置、资源包维护、合作复制",color:"var(--teal)"},{name:"运营/班主任",perm:"线索、体验营、社群",actions:"线索跟进、体验营管理、打卡、掉队召回、物料制作",color:"var(--purple)"},{name:"企微客服/销售",perm:"用户咨询、商业页成交",actions:"免费答疑、主动咨询后独立商业页成交、订单衔接",color:"var(--success)"},{name:"老师",perm:"课程履约、反馈",actions:"体验内容提供、展示服务价值、主责交付、进展总结",color:"var(--warning)"},{name:"合规/客服",perm:"风险监控、投诉处理",actions:"审核品牌/表达/授权、投诉与异常处置、监控声誉风险",color:"var(--danger)"},{name:"数据/财务",perm:"数据分析、财务",actions:"归因设计、成本口径、GMV核算、LTV和净GMV分析",color:"var(--text-3)"},{name:"产品/内容",perm:"课程、产品梯度",actions:"定义用户任务与产品边界、课程匹配、页面分离、模块化配置",color:"var(--text-3)"},{name:"医院/科室（只读）",perm:"查看本科室数据",actions:"查看覆盖范围、触达数据、合作风险监督",color:"var(--text-3)"}];
+var cards=roles.map(function(r,i){return '<div class="role-card" style="border-left-color:'+r.color+'" onclick="showRoleDetail('+i+')"><h4>'+r.name+'</h4><div class="role-perm">'+r.perm+'</div><div class="role-actions">'+r.actions+'</div></div>';}).join('');
+return '<div class="role-grid">'+cards+'</div>';
+};
+P.config=function(){
+var configs=[{item:"当前方案模式",val:'<span class="tag tag-green">S2 科室标杆型</span>',desc:"可切换为 S1/S3/S5",action:"切换"},{item:"企微CorpID",val:"ww****8291",desc:"企业微信API接入",action:"编辑"},{item:"支付商户号",val:"16****8892",desc:"微信支付商户号",action:"编辑"},{item:"小程序AppID",val:"wx****3a72",desc:"用户端小程序",action:"编辑"},{item:"商业页域名",val:"shop.example.com",desc:"独立商业页（与医院页面分离）",action:"编辑"},{item:"数据归因口径",val:"按医院×科室×场景×抓手",desc:"四级归因体系",action:"编辑"},{item:"退款规则",val:"7天无理由+体验期内全额",desc:"—",action:"编辑"},{item:"合规审核流程",val:"双审（合规+院方）",desc:"所有物料和商业页需双审",action:"编辑"}];
+var rows=configs.map(function(c){return '<tr onclick="configAction(\''+c.item+'\',\''+c.action+'\')"><td>'+c.item+'</td><td>'+c.val+'</td><td>'+c.desc+'</td><td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="configAction(\''+c.item+'\',\''+c.action+'\')">'+c.action+'</button></td></tr>';}).join('');
+return '<div class="card"><div class="card-header"><h3>系统配置</h3></div><div class="card-body"><table class="table"><thead><tr><th>配置项</th><th>当前值</th><th>说明</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+};
+
+/* ========== MODAL VIEWS ========== */
+function showLeadDetail(idx){
+var l=LEADS[idx];var tlHTML=l.journey.map(function(j){return '<div class="timeline-item '+j.state+'"><div class="tl-dot"></div><div class="tl-time">'+j.t+'</div><div class="tl-title">'+j.title+'</div><div class="tl-desc">'+j.desc+'</div></div>';}).join('');
+var amountText=l.amount>0?'¥'+l.amount.toLocaleString():l.amount<0?'-¥'+Math.abs(l.amount).toLocaleString():'未成交';
+openModal('<div class="modal-header"><h3>线索详情 — '+l.name+'</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><div class="detail-grid"><div class="dg-item"><span class="dg-label">姓名</span><span class="dg-value">'+l.name+'</span></div><div class="dg-item"><span class="dg-label">手机号</span><span class="dg-value">'+l.phone+'</span></div><div class="dg-item"><span class="dg-label">来源</span><span class="dg-value">'+l.source+'</span></div><div class="dg-item"><span class="dg-label">科室</span><span class="dg-value">'+l.dept+'</span></div><div class="dg-item"><span class="dg-label">当前阶段</span><span class="dg-value"><span class="tag tag-'+l.stageColor+'">'+l.stage+'</span></span></div><div class="dg-item"><span class="dg-label">体验课程</span><span class="dg-value">'+(l.course||'—')+'</span></div><div class="dg-item"><span class="dg-label">负责老师</span><span class="dg-value">'+(l.teacher||'—')+'</span></div><div class="dg-item"><span class="dg-label">首单金额</span><span class="dg-value">'+amountText+'</span></div><div class="dg-item"><span class="dg-label">旅程进度</span><span class="dg-value">'+l.progress+'%</span></div></div></div><div class="detail-section"><h4>客户完整旅程时间线</h4><div class="timeline">'+tlHTML+'</div></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="T(\'已标记'+l.name+'为重点关注\')">标记关注</button><button class="btn btn-outline" onclick="T(\'已发送企微消息给'+l.name+'\')">发送企微消息</button><button class="btn btn-outline" onclick="T(\'已导出'+l.name+'的旅程数据\')">导出旅程</button></div></div>');
+}
+function showHospitalDetail(idx){
+var h=HOSPITALS[idx];var gateNames=["G0合作门","G1执行门","G2价值门","G3商业门","G4履约门","G5规模门"];var gateHTML=h.gates.map(function(g,i){var cls=g===1?'pass':g===0?'pending':'blocked';var txt=g===1?'✅ 通过':g===0?'⏳ 评估中':'🔒 待启动';return '<div class="gate-status" style="margin-bottom:8px;"><span class="gate-dot '+cls+'"></span><span style="font-size:12px;">'+gateNames[i]+' '+txt+'</span></div>';}).join('');
+var resHTML=h.resources.map(function(r){var stCls=r.status==='已确认'||r.status==='已审核'||r.status==='已部署'?'status-active':r.status==='待审核'||r.status==='待确认'?'status-pending':'status-inactive';return '<tr><td>'+r.item+'</td><td>'+r.detail+'</td><td><span class="status '+stCls+'">'+r.status+'</span></td></tr>';}).join('');
+openModal('<div class="modal-header"><h3>'+h.name+' — 合作详情</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><div class="detail-grid"><div class="dg-item"><span class="dg-label">联系人</span><span class="dg-value">'+h.contact+'</span></div><div class="dg-item"><span class="dg-label">合作方案</span><span class="dg-value"><span class="tag tag-'+h.planColor+'">'+h.plan+'</span></span></div><div class="dg-item"><span class="dg-label">覆盖科室</span><span class="dg-value">'+(h.depts||'—')+'</span></div><div class="dg-item"><span class="dg-label">合作状态</span><span class="dg-value"><span class="status '+h.statusClass+'">'+h.status+'</span></span></div><div class="dg-item"><span class="dg-label">月可触达</span><span class="dg-value">'+(h.reach||'—')+'人</span></div><div class="dg-item"><span class="dg-label">月有效线索</span><span class="dg-value">'+(h.leads||'—')+'人</span></div><div class="dg-item"><span class="dg-label">月首单成交</span><span class="dg-value">'+(h.orders||'—')+'单</span></div><div class="dg-item"><span class="dg-label">月GMV</span><span class="dg-value">'+(h.gmv?'¥'+h.gmv.toLocaleString():'—')+'</span></div></div></div><div class="detail-section"><h4>决策门进度</h4>'+gateHTML+'</div><div class="detail-section"><h4>医院资源包</h4><table class="table"><thead><tr><th>资源项</th><th>详情</th><th>状态</th></tr></thead><tbody>'+resHTML+'</tbody></table></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="T(\'正在编辑'+h.name+'合作信息\')">编辑合作信息</button><button class="btn btn-outline" onclick="T(\'已导出'+h.name+'合作报告\')">导出报告</button>'+(h.status==='运行中'?'<button class="btn btn-outline" onclick="T(\'已暂停'+h.name+'合作，需审批确认\')">暂停合作</button>':'')+'</div></div>');
+}
+function showCourseDetail(idx){
+var c=COURSES[idx];openModal('<div class="modal-header"><h3>'+c.name+'</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><p style="font-size:13px;color:var(--text-2);line-height:1.6;">'+c.desc+'</p></div><div class="detail-section"><div class="detail-grid"><div class="dg-item"><span class="dg-label">类目</span><span class="dg-value">'+c.cat+'</span></div><div class="dg-item"><span class="dg-label">层级</span><span class="dg-value"><span class="tag tag-'+c.levelColor+'">'+c.level+'</span></span></div><div class="dg-item"><span class="dg-label">周期</span><span class="dg-value">'+c.duration+'</span></div><div class="dg-item"><span class="dg-label">价格</span><span class="dg-value">¥'+(c.price>0?c.price.toLocaleString():'免费')+'</span></div><div class="dg-item"><span class="dg-label">首单数</span><span class="dg-value">'+(c.orders!=='—'?c.orders:'—')+'</span></div><div class="dg-item"><span class="dg-label">完课率</span><span class="dg-value">'+(c.completion!=='—'?c.completion:'—')+'</span></div><div class="dg-item"><span class="dg-label">退款率</span><span class="dg-value">'+(c.refund!=='—'?c.refund:'—')+'</span></div><div class="dg-item"><span class="dg-label">状态</span><span class="dg-value"><span class="status '+(c.status==='上线'?'status-active':'status-pending')+'">'+c.status+'</span></span></div></div></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="T(\'正在编辑课程：'+c.name+'\')">编辑课程</button><button class="btn btn-outline" onclick="T(\'已复制课程：'+c.name+'\')">复制课程</button>'+(c.status==='上线'?'<button class="btn btn-outline" onclick="T(\'已下架课程：'+c.name+'，需审批确认\')">下架</button>':'<button class="btn btn-primary" onclick="T(\'已上架课程：'+c.name+'\')">上架</button>')+'</div></div>');
+}
+function showDeptDetail(idx){
+var d=DEPTS[idx];var courseTags=d.courses.map(function(c){return '<span class="tag tag-blue">'+c+'</span>';}).join(' ');
+openModal('<div class="modal-header"><h3>'+d.name+' — 科室配置详情</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><div class="detail-grid"><div class="dg-item"><span class="dg-label">适配人群</span><span class="dg-value">'+d.target+'</span></div><div class="dg-item"><span class="dg-label">推荐规则</span><span class="dg-value">'+d.rule+'</span></div><div class="dg-item"><span class="dg-label">推荐动作</span><span class="dg-value">'+d.action+'</span></div><div class="dg-item"><span class="dg-label">问题处理人</span><span class="dg-value">'+d.handler+'</span></div><div class="dg-item"><span class="dg-label">适用场景</span><span class="dg-value">'+d.scene+'</span></div><div class="dg-item"><span class="dg-label">运行状态</span><span class="dg-value"><span class="status '+d.statusClass+'">'+d.status+'</span></span></div><div class="dg-item"><span class="dg-label">候选课程</span><span class="dg-value">'+courseTags+'</span></div></div></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="T(\'正在编辑'+d.name+'配置\')">编辑配置</button><button class="btn btn-outline" onclick="T(\'已复制'+d.name+'配置为模板\')">复制为模板</button></div></div>');
+}
+function showGateDetail(idx){
+var g=GATES[idx];var stCls=g.status==='pass'?'status-active':g.status==='pending'?'status-pending':'status-inactive';
+openModal('<div class="modal-header"><h3>'+g.code+' '+g.name+'</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><h4>核心问题</h4><p style="font-size:15px;font-weight:500;">'+g.question+'</p></div><div class="detail-section"><h4>通过标准</h4><p style="font-size:13px;color:var(--text-2);">'+g.criteria+'</p></div><div class="detail-section"><h4>当前证据</h4><p style="font-size:13px;color:var(--text-2);">'+g.evidence+'</p></div><div class="detail-section"><h4>当前状态</h4><span class="status '+stCls+'" style="font-size:14px;padding:6px 12px;">'+g.statusText+'</span></div><div class="detail-section"><h4>不通过时的处理</h4><p style="font-size:13px;color:var(--danger);">'+g.failAction+'</p></div><div style="display:flex;gap:12px;margin-top:20px;">'+(g.status==='pass'?'<button class="btn btn-outline" onclick="T(\''+g.code+'已通过，可查看详细数据\')">查看详细数据</button>':'')+(g.status==='pending'?'<button class="btn btn-primary" onclick="T(\''+g.code+'评估中，请提交服务成本核算报告\')">提交评估报告</button>':'')+(g.status==='blocked'?'<button class="btn btn-primary" onclick="T(\''+g.code+'待启动，需先通过G4履约门\')">启动准备</button>':'')+'</div></div>');
+}
+function showRoleDetail(idx){
+var roles=[{name:"系统管理员",perm:"全部权限",actions:"系统配置、角色管理、数据导出、方案切换",color:"var(--primary)",perms:["仪表盘查看","医院管理","科室配置","线索池全量查看","课程管理","质量监控","决策门管理","角色权限管理","系统配置","数据导出"]},{name:"商务/医院合作",perm:"渠道管理、合作协议",actions:"医院管理、科室配置、资源包维护、合作复制",color:"var(--teal)",perms:["仪表盘查看","医院管理（编辑）","科室配置（编辑）","线索池查看","标准物料管理","合作报告导出"]},{name:"运营/班主任",perm:"线索、体验营、社群",actions:"线索跟进、体验营管理、打卡、掉队召回、物料制作",color:"var(--purple)",perms:["线索池（跟进）","体验营管理","打卡管理","掉队召回","企微群管理","物料制作"]},{name:"企微客服/销售",perm:"用户咨询、商业页成交",actions:"免费答疑、主动咨询后独立商业页成交、订单衔接",color:"var(--success)",perms:["用户咨询回复","商业页管理","订单管理","成交数据查看（本人）"]},{name:"老师",perm:"课程履约、反馈",actions:"体验内容提供、展示服务价值、主责交付、进展总结",color:"var(--warning)",perms:["课程履约管理","学员进展反馈","课程内容提交","满意度数据查看（本人课程）"]},{name:"合规/客服",perm:"风险监控、投诉处理",actions:"审核品牌/表达/授权、投诉与异常处置、监控声誉风险",color:"var(--danger)",perms:["物料审核","品牌/表达边界审核","授权协议审核","投诉处理","风险监控","下架决策"]},{name:"数据/财务",perm:"数据分析、财务",actions:"归因设计、成本口径、GMV核算、LTV和净GMV分析",color:"var(--text-3)",perms:["全量数据分析","归因配置","成本核算","GMV核算","LTV分析","财务导出"]},{name:"产品/内容",perm:"课程、产品梯度",actions:"定义用户任务与产品边界、课程匹配、页面分离、模块化配置",color:"var(--text-3)",perms:["课程产品管理","产品梯度配置","人群匹配规则","页面分离配置","小程序配置"]},{name:"医院/科室（只读）",perm:"查看本科室数据",actions:"查看覆盖范围、触达数据、合作风险监督",color:"var(--text-3)",perms:["本科室触达数据查看","本科室线索查看（脱敏）","合作风险监督"]}];
+var r=roles[idx];var permList=r.perms.map(function(p){return '<span class="tag tag-blue" style="margin:2px;">'+p+'</span>';}).join(' ');
+openModal('<div class="modal-header"><h3>'+r.name+'</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="detail-section"><div class="detail-grid"><div class="dg-item"><span class="dg-label">角色权限</span><span class="dg-value">'+r.perm+'</span></div><div class="dg-item"><span class="dg-label">主要职责</span><span class="dg-value">'+r.actions+'</span></div></div></div><div class="detail-section"><h4>权限明细</h4><div>'+permList+'</div></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="btn btn-primary" onclick="T(\'正在编辑角色：'+r.name+' 权限\')">编辑权限</button><button class="btn btn-outline" onclick="T(\'已复制角色：'+r.name+' 为模板\')">复制角色</button></div></div>');
+}
+function configAction(item,action){
+if(action==='切换'){openModal('<div class="modal-header"><h3>切换方案模式</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">当前方案：<span class="tag tag-green">S2 科室标杆型</span></p><div style="display:flex;flex-direction:column;gap:12px;"><div style="padding:16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;" onclick="T(\'已切换到 S1 系统驱动型\');closeModal();"><span class="fw-600">S1 系统驱动型</span><br><span class="text-muted">通过系统工具自动推动流程，适用于流程成熟后的大规模复制</span></div><div style="padding:16px;border:1px solid var(--primary);border-radius:8px;background:var(--primary-light);cursor:pointer;"><span class="fw-600">S2 科室标杆型（当前）</span><br><span class="text-muted">以科室为单位打造标杆，验证模式可复制性</span></div><div style="padding:16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;" onclick="T(\'已切换到 S3 集中承接型\');closeModal();"><span class="fw-600">S3 集中承接型</span><br><span class="text-muted">在院内设集中服务台，适用于多科室统一管理</span></div><div style="padding:16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;" onclick="T(\'已切换到 S5 联合连续服务型\');closeModal();"><span class="fw-600">S5 联合连续服务型</span><br><span class="text-muted">医生+老师联合，连续服务，适用于高LTV场景</span></div></div></div>');return;}
+T(action+'配置项：'+item+'（需要管理员审批）');
+}
+
+/* ========== DASHBOARD KPI DRILL-DOWN ========== */
+function dashboardGMV(){navPage('funnel',document.querySelectorAll('.nav-item')[1]);}
+function dashboardReach(){navToLeads('可触达');}
+function dashboardLeads(){navToLeads('授权手机号');}
+function dashboardOrders(){navToLeads('首单支付');}
+function dashboardRefund(){navPage('quality',document.querySelectorAll('.nav-item')[7]);}
+
+/* ========== NAVIGATION ========== */
+function navPage(id,el){
+curPage=id;document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+if(el)el.classList.add('active');else{var navItems=document.querySelectorAll('.nav-item');var map={dashboard:0,funnel:1,hospitals:2,departments:3,journey:4,courses:5,leads:6,quality:7,gates:8,roles:9,config:10};if(map[id]!==undefined)navItems[map[id]].classList.add('active');}
+var titles={dashboard:'数据看板',funnel:'GMV漏斗',hospitals:'医院管理',departments:'科室配置',journey:'客户旅程',courses:'课程产品',leads:'线索池',quality:'质量监控',gates:'决策门',roles:'角色权限',config:'系统配置'};
+document.getElementById('pageTitle').textContent=titles[id]||'';closeModal();R();
+}
+function navToLeads(filter){
+leadFilter={status:'',dept:'',source:'',search:''};
+if(filter){
+var stageMap={'可触达':'','实际推荐':'','推荐':'','扫码':'','扫码进入':'','授权':'已加企微','授权手机号':'已加企微','添加企微':'已加企微','加企微':'已加企微','体验到课':'体验中','到课':'体验中','主动咨询':'已咨询','咨询':'已咨询','首单支付':'履约中','首单':'履约中','完课':'已完课','续费':'已完课','转介绍':'已完课'};
+var deptMap={'康复科':'康复科','骨科':'骨科','内科':'内科'};
+var sourceMap={'诊后推荐':'诊后推荐','候诊推荐':'候诊推荐','复查推荐':'复查推荐','公众号':'公众号'};
+if(stageMap[filter])leadFilter.status=stageMap[filter];
+if(deptMap[filter])leadFilter.dept=deptMap[filter];
+if(sourceMap[filter])leadFilter.source=sourceMap[filter];
+}
+navPage('leads',document.querySelectorAll('.nav-item')[6]);
+if(filter)T('已筛选：'+filter);
+}
+function navToCourses(cat){
+courseFilter={cat:cat,level:'',_tab:'list'};
+navPage('courses',document.querySelectorAll('.nav-item')[5]);
+T('已筛选课程类目：'+cat);
+}
+
+/* ========== MODAL & TOAST ========== */
+function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalOverlay').classList.add('show');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+var toastTimer;
+function T(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2500);}
+
+/* ========== INIT ========== */
+R();
+</script>
+</body>
+</html>
